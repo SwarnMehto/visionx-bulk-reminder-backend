@@ -1,99 +1,72 @@
 import fs from "fs";
-
 import csv from "csv-parser";
-
 import Contact from "../models/Contact.js";
+import { csvQueue } from "../queues/csvQueue.js";
 
 // ======================================
-// CSV UPLOAD
+// UPLOAD CSV (QUEUE SYSTEM ONLY)
 // ======================================
 
-export const uploadCSV =
-  async (req, res) => {
-    try {
-      const results = [];
+export const uploadCSV = async (req, res) => {
+  try {
+    console.log("UPLOAD HIT");
 
-      const campaignId =
-        req.body.campaignId;
-
-      fs.createReadStream(
-        req.file.path
-      )
-
-        .pipe(csv())
-
-        .on("data", (data) => {
-          results.push({
-            name:
-              data.name || "",
-
-            phone:
-              data.phone || "",
-
-            email:
-              data.email || "",
-
-            campaignId,
-          });
-        })
-
-        .on(
-          "end",
-          async () => {
-            await Contact.insertMany(
-              results
-            );
-
-            // DELETE FILE
-            fs.unlinkSync(
-              req.file.path
-            );
-
-            res.json({
-              success: true,
-
-              total:
-                results.length,
-
-              message:
-                "Contacts Uploaded Successfully 🚀",
-            });
-          }
-        );
-
-    } catch (error) {
-      console.log(error);
-
-      res.status(500).json({
-        message:
-          error.message,
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "No file uploaded",
       });
     }
-  };
 
-// ======================================
-// GET CONTACTS
-// ======================================
-
-export const getContacts =
-  async (req, res) => {
-    try {
-      const contacts =
-        await Contact.find({
-          campaignId:
-            req.params.id,
-        });
-
-      res.json({
-        success: true,
-
-        contacts,
-      });
-
-    } catch (error) {
-      res.status(500).json({
-        message:
-          error.message,
+    if (!req.body.campaignId) {
+      return res.status(400).json({
+        success: false,
+        message: "Campaign ID missing",
       });
     }
-  };
+
+    const job = await csvQueue.add("process-csv", {
+      filePath: req.file.path,
+      campaignId: req.body.campaignId,
+    });
+
+    return res.json({
+      success: true,
+      jobId: job.id,
+      message: "File uploaded, processing started",
+    });
+
+  } catch (error) {
+    console.log("UPLOAD ERROR:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Upload failed",
+    });
+  }
+};
+
+// ======================================
+// GET CONTACTS (MUST EXIST)
+// ======================================
+
+export const getContacts = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const contacts = await Contact.find({ campaignId: id });
+
+    return res.json({
+      success: true,
+      contacts,
+    });
+
+  } catch (error) {
+    console.log("GET CONTACTS ERROR:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch contacts",
+    });
+  }
+};
