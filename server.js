@@ -15,6 +15,9 @@ import redis from "./config/redis.js";
 await redis.set("test", "ok");
 console.log(await redis.get("test"));
 dotenv.config();
+console.log("MONGO:", !!process.env.MONGO_URI);
+console.log("REDIS:", !!process.env.REDIS_URL);
+console.log("JWT:", !!process.env.JWT_SECRET);
 console.log("REDIS URL =", process.env.REDIS_URL);
 const app = express();
 
