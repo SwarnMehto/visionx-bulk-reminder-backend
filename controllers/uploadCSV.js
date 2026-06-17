@@ -1,6 +1,7 @@
 import fs from "fs";
 import csv from "csv-parser";
 import Contact from "../models/Contact.js";
+import Campaign from "../models/Campaign.js";
 
 export const uploadCSV = async (req, res) => {
   try {
@@ -19,17 +20,40 @@ export const uploadCSV = async (req, res) => {
     fs.createReadStream(filePath)
       .pipe(csv())
       .on("data", (row) => {
-        results.push({ ...row, campaignId });
+        results.push({
+          ...row,
+          campaignId,
+        });
       })
       .on("end", async () => {
-        await Contact.insertMany(results);
+        try {
+          // Save Contacts
+          await Contact.insertMany(results);
 
-        fs.unlinkSync(filePath);
+          // Update Campaign Contact Count
+          await Campaign.findByIdAndUpdate(
+            campaignId,
+            {
+              totalContacts: results.length,
+            }
+          );
 
-        return res.json({
-          success: true,
-          total: results.length,
-        });
+          // Delete uploaded file
+          fs.unlinkSync(filePath);
+
+          return res.json({
+            success: true,
+            total: results.length,
+          });
+
+        } catch (err) {
+          console.log("CSV SAVE ERROR:", err);
+
+          return res.status(500).json({
+            success: false,
+            message: "CSV Processing Failed",
+          });
+        }
       });
 
   } catch (error) {

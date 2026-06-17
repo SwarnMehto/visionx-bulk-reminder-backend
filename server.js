@@ -11,9 +11,18 @@ import bulkRoutes from "./routes/bulkRoutes.js";
 import emailRoutes from "./routes/emailRoutes.js";
 import whatsappRoutes from "./routes/whatsappRoutes.js";
 import redis from "./config/redis.js";
+import clientRoutes from "./routes/clientRoutes.js";
+import dashboardRoutes from "./routes/dashboardRoutes.js";
+import "./workers/csvWorker.js";
+import { csvQueue } from "./queues/csvQueue.js";
+
+
 
 await redis.set("test", "ok");
 console.log(await redis.get("test"));
+
+await csvQueue.obliterate({ force: true });
+console.log("Queue Cleared");
 dotenv.config();
 console.log("MONGO:", !!process.env.MONGO_URI);
 console.log("REDIS:", !!process.env.REDIS_URL);
@@ -41,7 +50,8 @@ app.use("/api/contacts", contactRoutes);
 app.use("/api/bulk", bulkRoutes);
 app.use("/api/email", emailRoutes);
 app.use("/api/whatsapp", whatsappRoutes);
-
+app.use("/api/clients", clientRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 // TEST
 app.get("/", (req, res) => {
   res.send("🚀 VisionX Backend Running");

@@ -1,5 +1,5 @@
 import Campaign from "../models/Campaign.js";
-
+import Client from "../models/Client.js";
 // ==============================
 // CREATE CAMPAIGN
 // ==============================
@@ -9,34 +9,44 @@ export const createCampaign =
     try {
       const {
         name,
+        partyName,
         type,
+        message,
+        poster
       } = req.body;
 
-      // CREATE
       const campaign =
         await Campaign.create({
           name,
-
+          partyName,
           type,
-
+          message,
           status: "Draft",
-
-          userId:
-            req.user.id,
+          userId: req.user.id,
         });
+        if (partyName) {
+  const existingClient =
+    await Client.findOne({
+      name: partyName,
+      userId: req.user.id,
+    });
+
+  if (!existingClient) {
+    await Client.create({
+      name: partyName,
+      userId: req.user.id,
+    });
+  }
+}
 
       res.json({
         success: true,
-
         campaign,
       });
 
     } catch (error) {
-      console.log(error);
-
       res.status(500).json({
-        message:
-          error.message,
+        message: error.message,
       });
     }
   };
@@ -92,6 +102,60 @@ export const getSingleCampaign =
       res.status(500).json({
         message:
           error.message,
+      });
+    }
+  };
+  export const launchCampaign =
+  async (req, res) => {
+    try {
+      const campaign =
+        await Campaign.findById(
+          req.params.id
+        );
+
+      if (!campaign) {
+        return res.status(404).json({
+          success: false,
+          message:
+            "Campaign not found",
+        });
+      }
+
+      campaign.status =
+        "Completed";
+
+      await campaign.save();
+
+      res.json({
+        success: true,
+        successCount: 100,
+        failedCount: 0,
+      });
+
+    } catch (error) {
+      res.status(500).json({
+        message: error.message,
+      });
+    }
+  };
+  export const updateCampaign =
+  async (req, res) => {
+    try {
+      const campaign =
+        await Campaign.findByIdAndUpdate(
+          req.params.id,
+          req.body,
+          { new: true }
+        );
+
+      res.json({
+        success: true,
+        campaign,
+      });
+
+    } catch (error) {
+      res.status(500).json({
+        message: error.message,
       });
     }
   };

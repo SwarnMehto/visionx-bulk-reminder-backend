@@ -6,6 +6,8 @@ import {
   createCampaign,
   getCampaigns,
   getSingleCampaign,
+  launchCampaign,
+  updateCampaign
 } from "../controllers/campaignController.js";
 
 const router = express.Router();
@@ -29,6 +31,19 @@ router.get(
   "/:id",
   authMiddleware,
   getSingleCampaign
+);
+
+// LAUNCH CAMPAIGN
+router.put(
+  "/:id/launch",
+  authMiddleware,
+  launchCampaign
+);
+
+router.put(
+  "/:id",
+  authMiddleware,
+  updateCampaign
 );
 
 export default router;

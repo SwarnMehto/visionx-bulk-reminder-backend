@@ -1,15 +1,14 @@
 import fs from "fs";
-import csv from "csv-parser";
 import Contact from "../models/Contact.js";
 import { csvQueue } from "../queues/csvQueue.js";
 
 // ======================================
-// UPLOAD CSV (QUEUE SYSTEM ONLY)
+// UPLOAD CSV
 // ======================================
 
 export const uploadCSV = async (req, res) => {
   try {
-    console.log("UPLOAD HIT");
+    console.log("REQ FILE =", req.file);
 
     if (!req.file) {
       return res.status(400).json({
@@ -25,36 +24,48 @@ export const uploadCSV = async (req, res) => {
       });
     }
 
-    const job = await csvQueue.add("process-csv", {
-      filePath: req.file.path,
-      campaignId: req.body.campaignId,
-    });
+    console.log(
+      "FILE EXISTS =",
+      fs.existsSync(req.file.path)
+    );
+
+    const job = await csvQueue.add(
+      "process-csv",
+      {
+        filePath: req.file.path,
+        campaignId: req.body.campaignId,
+      }
+    );
 
     return res.json({
       success: true,
       jobId: job.id,
-      message: "File uploaded, processing started",
+      message: "CSV queued successfully",
     });
 
   } catch (error) {
-    console.log("UPLOAD ERROR:", error);
+    console.log(
+      "UPLOAD ERROR:",
+      error
+    );
 
     return res.status(500).json({
       success: false,
-      message: "Upload failed",
+      message: "Upload Failed",
     });
   }
 };
 
 // ======================================
-// GET CONTACTS (MUST EXIST)
+// GET CONTACTS
 // ======================================
 
 export const getContacts = async (req, res) => {
   try {
-    const { id } = req.params;
-
-    const contacts = await Contact.find({ campaignId: id });
+    const contacts =
+      await Contact.find({
+        campaignId: req.params.id,
+      });
 
     return res.json({
       success: true,
@@ -62,11 +73,12 @@ export const getContacts = async (req, res) => {
     });
 
   } catch (error) {
-    console.log("GET CONTACTS ERROR:", error);
+    console.log(error);
 
     return res.status(500).json({
       success: false,
-      message: "Failed to fetch contacts",
+      message:
+        "Failed to fetch contacts",
     });
   }
 };
