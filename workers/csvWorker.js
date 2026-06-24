@@ -30,6 +30,11 @@ const worker = new Worker(
     console.log("File not found:", filePath);
     return resolve();
   }
+  
+  if (!fs.existsSync(filePath)) {
+  console.log("❌ File missing:", filePath);
+  return;
+}
 
   fs.createReadStream(filePath)
     .pipe(csv())

@@ -1,20 +1,43 @@
 import multer from "multer";
-destination: (req, file, cb) => {
-  cb(null, "uploads/");
+import fs from "fs";
+import path from "path";
+
+// ensure uploads folder exists
+const uploadPath = path.join(process.cwd(), "uploads");
+
+if (!fs.existsSync(uploadPath)) {
+  fs.mkdirSync(uploadPath, { recursive: true });
 }
+
+// storage config
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "uploads/");
+    cb(null, uploadPath);
   },
 
   filename: function (req, file, cb) {
-    cb(
-      null,
-      Date.now() + "-" + file.originalname
-    );
+    const uniqueName =
+      Date.now() + "-" + Math.round(Math.random() * 1e9);
+
+    cb(null, uniqueName + "-" + file.originalname);
   },
 });
 
-const upload = multer({ storage });
+// file filter (optional but good)
+const fileFilter = (req, file, cb) => {
+  if (
+    file.mimetype === "text/csv" ||
+    file.originalname.endsWith(".csv")
+  ) {
+    cb(null, true);
+  } else {
+    cb(new Error("Only CSV files allowed"), false);
+  }
+};
+
+const upload = multer({
+  storage,
+  fileFilter,
+});
 
 export default upload;

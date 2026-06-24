@@ -15,7 +15,7 @@ import clientRoutes from "./routes/clientRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import "./workers/csvWorker.js";
 import { csvQueue } from "./queues/csvQueue.js";
-
+import path from "path";
 
 
 await redis.set("test", "ok");
@@ -34,8 +34,10 @@ const app = express();
 connectDB();
 
 // 🔥 CREATE UPLOADS FOLDER (CRITICAL FOR RENDER)
-if (!fs.existsSync("uploads")) {
-  fs.mkdirSync("uploads");
+const uploadDir = path.join(process.cwd(), "uploads");
+
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
 }
 
 // MIDDLEWARE
@@ -46,7 +48,7 @@ app.use(express.urlencoded({ extended: true }));
 // ROUTES
 app.use("/api/auth", authRoutes);
 app.use("/api/campaigns", campaignRoutes);
-app.use("/api/contacts", contactRoutes);
+app.use("/api/contacts", contactRoutes);        
 app.use("/api/bulk", bulkRoutes);
 app.use("/api/email", emailRoutes);
 app.use("/api/whatsapp", whatsappRoutes);

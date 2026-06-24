@@ -1,5 +1,4 @@
 import express from "express";
-
 import authMiddleware from "../middleware/authMiddleware.js";
 
 import {
@@ -13,37 +12,18 @@ import {
 const router = express.Router();
 
 // CREATE
-router.post(
-  "/create",
-  authMiddleware,
-  createCampaign
-);
+router.post("/create", authMiddleware, createCampaign);
 
 // GET ALL
-router.get(
-  "/",
-  authMiddleware,
-  getCampaigns
-);
+router.get("/", authMiddleware, getCampaigns);
 
 // GET SINGLE
-router.get(
-  "/:id",
-  authMiddleware,
-  getSingleCampaign
-);
+router.get("/:id", authMiddleware, getSingleCampaign);
 
-// LAUNCH CAMPAIGN
-router.put(
-  "/:id/launch",
-  authMiddleware,
-  launchCampaign
-);
+// UPDATE
+router.put("/:id", authMiddleware, updateCampaign);
 
-router.put(
-  "/:id",
-  authMiddleware,
-  updateCampaign
-);
+// LAUNCH
+router.put("/:id/launch", authMiddleware, launchCampaign);
 
 export default router;
